@@ -1,0 +1,64 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Astro Chart API",
+    "version": "1.0.0",
+    "description": "API for generating natal charts based on birth information."
+  },
+  "servers": [
+    {
+      "url": "https://menhou.com"
+    }
+  ],
+  "paths": {
+    "/generate-chart": {
+      "post": {
+        "summary": "Generate a natal chart",
+        "description": "Generate a natal chart based on user-provided birth information.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "year": { "type": "integer", "example": 1990 },
+                  "month": { "type": "integer", "example": 5 },
+                  "day": { "type": "integer", "example": 21 },
+                  "hour": { "type": "integer", "example": 14 },
+                  "minute": { "type": "integer", "example": 30 }
+                },
+                "required": ["year", "month", "day", "hour", "minute"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated natal chart image",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
