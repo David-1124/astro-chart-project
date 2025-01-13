@@ -1,0 +1,25 @@
+# 忽略虛擬環境
+.venv/
+
+# 忽略編譯文件
+*.pyc
+__pycache__/
+
+# 忽略 IDE 配置
+.idea/
+
+# 忽略系統文件
+.DS_Store
+Thumbs.db
+
+# 忽略 Windows 用戶目錄
+AppData/
+Desktop/
+Documents/
+Downloads/
+Music/
+Pictures/
+Videos/
+
+# 其他無關文件或資料夾
+*.log
