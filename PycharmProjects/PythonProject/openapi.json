@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://menhou.com"
+      "url": "https://astro-chart-api.onrender.com"
     }
   ],
   "paths": {
