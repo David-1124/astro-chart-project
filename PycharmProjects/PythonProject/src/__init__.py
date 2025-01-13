@@ -1,3 +1,3 @@
-from src.calculator import calculate_planet_positions
+from calculator import calculate_planet_positions
 
 

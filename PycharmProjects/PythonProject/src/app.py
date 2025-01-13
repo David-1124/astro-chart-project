@@ -1,8 +1,12 @@
 import matplotlib.pyplot as plt
 from src.calculator import calculate_planet_positions
 from flask import Flask, request, send_file
-from src.visualization import plot_natal_chart
+from src import plot_natal_chart
+import sys
+import os
 
+# 將專案根目錄添加到 sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 app = Flask(__name__)
 

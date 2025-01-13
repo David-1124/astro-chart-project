@@ -1,5 +1,5 @@
-from calculator import calculate_planet_positions
-from utils import format_positions
+from src.calculator import calculate_planet_positions
+from src.utils import format_positions
 
 def test_chart():
     # 測試輸入數據
