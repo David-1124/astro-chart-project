@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from src.calculator import calculate_planet_positions
 from flask import Flask, request, send_file
-from src import plot_natal_chart
+from visualization import plot_natal_chart
 import sys
 import os
 

@@ -1,3 +1,1 @@
-web: python src/app.py
-
-
+web: PYTHONPATH=. python src/app.py
