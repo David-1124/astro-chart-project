@@ -1,9 +1,10 @@
-from flask import Flask, send_file
-import matplotlib.pyplot as plt
-from calculator import calculate_planet_positions
-from flask import Flask, request, send_file
-from visualization import plot_natal_chart
 import uuid
+import os
+import matplotlib.pyplot as plt
+from flask import Flask, request, send_file
+
+from calculator import calculate_planet_positions
+from visualization import plot_natal_chart
 
 app = Flask(__name__)
 
@@ -43,4 +44,5 @@ def generate_chart():
     return send_file(output_path, mimetype='image/png')
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))  # 默認為 5000
+    app.run(host="0.0.0.0", port=port)
