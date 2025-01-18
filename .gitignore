@@ -20,6 +20,7 @@ Downloads/
 Music/
 Pictures/
 Videos/
+output/*.png
 
 # 其他無關文件或資料夾
 *.log

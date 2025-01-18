@@ -2,7 +2,8 @@ import swisseph as swe
 import os
 
 # 設定 Swiss Ephemeris 的數據路徑（相對路徑）
-DATA_PATH = os.path.join(os.path.dirname(__file__), "C:/Users/User/PycharmProjects/PythonProject/data")
+DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+print(f"Using data path: {DATA_PATH}")
 
 def calculate_planet_positions(year, month, day, hour, minute):
     """
@@ -39,3 +40,5 @@ def calculate_planet_positions(year, month, day, hour, minute):
             print(f"Exception while calculating {swe.get_planet_name(planet)}: {e}")
 
     return planet_positions
+positions = calculate_planet_positions(2025, 1, 15, 12, 0)
+print(f"Calculated positions: {positions}")

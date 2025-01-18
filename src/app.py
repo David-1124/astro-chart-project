@@ -1,8 +1,9 @@
-import uuid
 import os
-import matplotlib.pyplot as plt
+import uuid
 from flask import Flask, request, send_file
-
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from calculator import calculate_planet_positions
 from visualization import plot_natal_chart
 
@@ -12,37 +13,49 @@ app = Flask(__name__)
 def home():
     return "Server is running!"
 
-@app.route('/favicon.ico')
+@app.route("/favicon.ico")
 def favicon():
-    return '', 204  # 或返回實際圖標文件
+    icon_path = os.path.join(os.path.dirname(__file__), "static/favicon.ico")
+    if os.path.exists(icon_path):
+        return send_file(icon_path, mimetype="image/vnd.microsoft.icon")
+    return '', 404
 
-@app.route('/generate-chart', methods=['POST'])
+@app.route("/generate-chart", methods=["POST"])
 def generate_chart():
     if not request.is_json:
         return "Invalid request: Expected JSON", 400
 
     data = request.json
-    year = data.get('year')
-    month = data.get('month')
-    day = data.get('day')
-    hour = data.get('hour')
-    minute = data.get('minute')
+    year = data.get("year")
+    month = data.get("month")
+    day = data.get("day")
+    hour = data.get("hour")
+    minute = data.get("minute")
 
-    if not all([year, month, day, hour, minute]):
+    if any(value is None for value in [year, month, day, hour, minute]):
         return "Invalid request: Missing required fields", 400
 
-    # 計算行星位置
-    positions = calculate_planet_positions(year, month, day, hour, minute)
+    try:
+        positions = calculate_planet_positions(year, month, day, hour, minute)
+        print(f"Calculated positions: {positions}")
+    except Exception as e:
+        return f"Error calculating planet positions: {e}", 500
 
-    # 繪製並保存命盤圖
-    output_path = f"natal_chart_{uuid.uuid4().hex}.png"
-    plot_natal_chart(positions, show=False)
-    plt.savefig(output_path, dpi=300)
-    plt.close()
+    output_folder = os.path.join(os.path.dirname(__file__), "output")
+    os.makedirs(output_folder, exist_ok=True)
+    output_path = os.path.join(output_folder, f"natal_chart_{uuid.uuid4().hex}.png")
+    print(f"Saving chart to: {output_path}")
 
-    # 返回結果
-    return send_file(output_path, mimetype='image/png')
+    try:
+        plot_natal_chart(positions, output_path=output_path, show=False)
+        print(f"Chart saved successfully to {output_path}")
+    except Exception as e:
+        print(f"Error saving chart: {e}")
+        return f"Error generating chart: {e}", 500
+
+    return send_file(output_path, mimetype="image/png")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # 默認為 5000
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Current working directory: {os.getcwd()}")
     app.run(host="0.0.0.0", port=port)
