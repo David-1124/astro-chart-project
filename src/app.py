@@ -29,6 +29,7 @@ def favicon():
 @app.route("/generate-chart", methods=["POST"])
 def generate_chart():
     if not request.is_json:
+        logger.error("Invalid request: Expected JSON")
         return "Invalid request: Expected JSON", 400
 
     data = request.json
@@ -39,6 +40,7 @@ def generate_chart():
     minute = data.get("minute")
 
     if any(value is None for value in [year, month, day, hour, minute]):
+        logger.error("Invalid request: Missing required fields")
         return "Invalid request: Missing required fields", 400
 
     output_folder = os.path.join(os.path.dirname(__file__), "output")
@@ -66,11 +68,20 @@ def generate_chart():
 
 @app.route("/ai-plugin.json")
 def serve_ai_plugin():
-    return send_from_directory(os.path.dirname(__file__), "ai-plugin.json", mimetype="application/json")
+    plugin_path = os.path.join(os.path.dirname(__file__), "ai-plugin.json")
+    if os.path.exists(plugin_path):
+        return send_file(plugin_path, mimetype="application/json")
+    logger.error("ai-plugin.json file not found")
+    return "ai-plugin.json file not found", 404
 
 @app.route("/openapi.json")
 def serve_openapi():
-    return send_from_directory(os.path.dirname(__file__), "openapi.json", mimetype="application/json")
+    openapi_path = os.path.join(os.path.dirname(__file__), "openapi.json")
+    if os.path.exists(openapi_path):
+        return send_file(openapi_path, mimetype="application/json")
+    logger.error("openapi.json file not found")
+    return "openapi.json file not found", 404
+
 
 def clean_output_folder(folder_path, max_age_seconds=3600):
     folder_path = os.path.abspath(folder_path)
