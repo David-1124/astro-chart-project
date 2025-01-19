@@ -1,12 +1,20 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams
+import matplotlib.font_manager as fm
 import matplotlib
+
 matplotlib.use('Agg')  # 使用非交互式后端
 
-# 设置支持中文的字体
-rcParams['font.sans-serif'] = ['SimHei']
-rcParams['axes.unicode_minus'] = False
+# 设置字体路径（使用您上传的 msjh.ttc 文件路径）
+font_path = os.path.join(os.path.dirname(__file__), "fonts/msjh.ttc")
+  # 替换为实际路径，例如 "./msjh.ttc"
+prop = fm.FontProperties(fname=font_path)
+
+# 设置全局字体
+rcParams['font.family'] = prop.get_name()
+rcParams['axes.unicode_minus'] = False  # 确保负号正常显示
 
 def plot_natal_chart(planet_positions, output_path=None, show=True):
     """
@@ -30,7 +38,8 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
 
         # 绘制星座分区
         for angle, sign in zip(zodiac_angles, zodiac_signs):
-            ax.text(angle, 1.1, sign, ha='center', va='center', fontsize=10, color='blue')  # 显示星座名称
+            ax.text(angle, 1.1, sign, ha='center', va='center', fontsize=10,
+                    color='blue', fontproperties=prop)  # 显示星座名称并指定字体
             ax.plot([angle, angle], [0, 1], color='gray', linestyle='--', linewidth=0.5)  # 绘制分隔线
 
         # 绘制行星位置
@@ -40,8 +49,8 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
 
         # 图表设置
         ax.set_yticklabels([])  # 隐藏径向刻度
-        ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0), fontsize=8)
-        ax.set_title("命盘图", va='bottom', fontsize=16, pad=30)
+        ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0), fontsize=8, prop=prop)
+        ax.set_title("命盘图", va='bottom', fontsize=16, pad=30, fontproperties=prop)
 
         # 调整径向刻度的位置
         ax.tick_params(axis='y', pad=20)  # 增加刻度与圆圈的距离
