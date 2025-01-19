@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Astro Chart API",
+    "title": "Natal Chart API",
     "version": "1.0.0",
-    "description": "API for generating natal charts based on birth information."
+    "description": "API for generating natal charts based on birth details."
   },
   "servers": [
     {
@@ -14,18 +14,19 @@
     "/generate-chart": {
       "post": {
         "summary": "Generate a natal chart",
-        "description": "Generate a natal chart based on user-provided birth information.",
+        "operationId": "generateChart",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "year": { "type": "integer", "example": 1990 },
-                  "month": { "type": "integer", "example": 5 },
-                  "day": { "type": "integer", "example": 21 },
-                  "hour": { "type": "integer", "example": 14 },
-                  "minute": { "type": "integer", "example": 30 }
+                  "year": { "type": "integer", "example": 2025 },
+                  "month": { "type": "integer", "example": 1 },
+                  "day": { "type": "integer", "example": 15 },
+                  "hour": { "type": "integer", "example": 12 },
+                  "minute": { "type": "integer", "example": 0 }
                 },
                 "required": ["year", "month", "day", "hour", "minute"]
               }
@@ -34,28 +35,20 @@
         },
         "responses": {
           "200": {
-            "description": "Generated natal chart image",
-            "content": {
-              "image/png": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data",
+            "description": "Chart generated successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": { "type": "string" }
+                    "message": { "type": "string" }
                   }
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing fields or invalid input."
           }
         }
       }

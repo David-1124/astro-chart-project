@@ -1,7 +1,7 @@
 import os
 import uuid
 import time
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, send_from_directory
 import matplotlib
 matplotlib.use('Agg')  # 非交互式后端
 import matplotlib.pyplot as plt
@@ -63,6 +63,14 @@ def generate_chart():
         return "Error occurred while generating the chart.", 500
 
     return send_file(output_path, mimetype="image/png")
+
+@app.route("/ai-plugin.json")
+def serve_ai_plugin():
+    return send_from_directory(os.path.dirname(__file__), "ai-plugin.json", mimetype="application/json")
+
+@app.route("/openapi.json")
+def serve_openapi():
+    return send_from_directory(os.path.dirname(__file__), "openapi.json", mimetype="application/json")
 
 def clean_output_folder(folder_path, max_age_seconds=3600):
     folder_path = os.path.abspath(folder_path)

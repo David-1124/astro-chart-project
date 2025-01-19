@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Natal Chart Generator",
+  "name_for_model": "natal_chart_generator",
+  "description_for_human": "Generate natal charts using birth details.",
+  "description_for_model": "A plugin to generate natal charts using birth year, month, day, hour, and minute.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://astro-chart-api.onrender.com/openapi.json"
+  },
+  "logo_url": "https://astro-chart-api.onrender.com/logo.png",
+  "contact_email": "support@example.com",
+  "legal_info_url": "https://example.com/legal"
+}
