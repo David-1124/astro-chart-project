@@ -35,20 +35,16 @@
         },
         "responses": {
           "200": {
-            "description": "Chart generated successfully",
+            "description": "Generated natal chart image",
             "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": { "type": "string" }
-                  }
-                }
-              }
+              "image/png": {}
             }
           },
           "400": {
             "description": "Bad request - missing fields or invalid input."
+          },
+          "500": {
+            "description": "Server error occurred while generating the chart."
           }
         }
       }
