@@ -4,7 +4,7 @@ import time
 import uuid
 
 import matplotlib
-from flask import Flask, request, jsonify, url_for, send_file, safe_join
+from flask import Flask, request, jsonify, url_for, send_file
 
 matplotlib.use('Agg')  # 非交互式后端
 from calculator import calculate_planet_positions
@@ -66,22 +66,24 @@ def generate_chart():
         logger.error(f"Error saving chart: {e}")
         return jsonify({"error": "Error occurred while generating the chart."}), 500
 
-    # 返回圖片 URL
+    # 返回图片 URL
     chart_url = url_for('serve_output_file', filename=output_filename, _external=True)
     return jsonify({"message": "Chart generated successfully", "chart_url": chart_url}), 200
 
 @app.route("/output/<filename>")
 def serve_output_file(filename):
     output_folder = os.path.join(os.path.dirname(__file__), "output")
-    try:
-        file_path = safe_join(output_folder, filename)
-        if not os.path.exists(file_path):
-            logger.error(f"File not found: {filename}")
-            return jsonify({"error": "File not found"}), 404
+    file_path = os.path.abspath(os.path.join(output_folder, filename))
+
+    # 验证路径安全性
+    if not file_path.startswith(os.path.abspath(output_folder)):
+        logger.error(f"Attempted access to unsafe path: {file_path}")
+        return jsonify({"error": "Access denied"}), 403
+
+    if os.path.exists(file_path):
         return send_file(file_path, mimetype="image/png")
-    except Exception as e:
-        logger.error(f"Error serving file: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+    logger.error(f"File not found: {filename}")
+    return jsonify({"error": "File not found"}), 404
 
 @app.route("/ai-plugin.json")
 def serve_ai_plugin():
