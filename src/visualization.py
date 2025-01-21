@@ -1,4 +1,3 @@
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams
@@ -6,7 +5,7 @@ import matplotlib
 
 matplotlib.use('Agg')  # 使用非交互式后端
 
-# 使用 Matplotlib 内置字体 DejaVu Sans
+# 设置字体为 Matplotlib 内置字体 DejaVu Sans
 rcParams['font.family'] = 'DejaVu Sans'
 rcParams['axes.unicode_minus'] = False  # 确保负号正常显示
 
@@ -18,7 +17,7 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
     :param show: 是否显示图表，默认为 True
     """
     try:
-        # 创建图表
+        # 创建极坐标图表
         fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': 'polar'})
         ax.set_theta_zero_location('E')  # 将黄道的 0 度 (牡羊座) 设为东方
         ax.set_theta_direction(-1)       # 逆时针排列星座
@@ -33,7 +32,7 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
         # 绘制星座分区
         for angle, sign in zip(zodiac_angles, zodiac_signs):
             ax.text(angle, 1.1, sign, ha='center', va='center', fontsize=10,
-                    color='blue')  # 显示星座名称并使用默认字体
+                    color='blue')  # 显示星座名称
             ax.plot([angle, angle], [0, 1], color='gray', linestyle='--', linewidth=0.5)  # 绘制分隔线
 
         # 绘制行星位置
@@ -41,7 +40,7 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
             theta = np.deg2rad(position)  # 将度数转为弧度
             ax.plot(theta, 0.8, 'o', label=f"{planet} ({position:.2f}°)", markersize=8)
 
-        # 图表设置
+        # 设置图表标题和图例
         ax.set_yticklabels([])  # 隐藏径向刻度
         ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0), fontsize=8)
         ax.set_title("命盘图", va='bottom', fontsize=16, pad=30)
