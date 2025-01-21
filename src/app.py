@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import logging
 
 import matplotlib
 from flask import Flask, request, send_file
@@ -8,7 +9,6 @@ from flask import Flask, request, send_file
 matplotlib.use('Agg')  # 非交互式后端
 from calculator import calculate_planet_positions
 from visualization import plot_natal_chart
-import logging
 
 # 初始化日志
 logging.basicConfig(level=logging.INFO)
@@ -82,7 +82,6 @@ def serve_openapi():
         return send_file(openapi_path, mimetype="application/json")
     logger.error("openapi.json file not found")
     return "openapi.json file not found", 404
-
 
 def clean_output_folder(folder_path, max_age_seconds=3600):
     folder_path = os.path.abspath(folder_path)
