@@ -1,10 +1,11 @@
 import os
-import uuid
 import time
-from flask import Flask, request, send_file, send_from_directory
+import uuid
+
 import matplotlib
+from flask import Flask, request, send_file
+
 matplotlib.use('Agg')  # 非交互式后端
-import matplotlib.pyplot as plt
 from calculator import calculate_planet_positions
 from visualization import plot_natal_chart
 import logging
