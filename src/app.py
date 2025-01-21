@@ -4,7 +4,7 @@ import uuid
 import logging
 
 import matplotlib
-from flask import Flask, request, send_file
+from flask import Flask, request, jsonify, url_for
 
 matplotlib.use('Agg')  # 非交互式后端
 from calculator import calculate_planet_positions
@@ -31,7 +31,7 @@ def favicon():
 def generate_chart():
     if not request.is_json:
         logger.error("Invalid request: Expected JSON")
-        return "Invalid request: Expected JSON", 400
+        return jsonify({"error": "Invalid request: Expected JSON"}), 400
 
     data = request.json
     year = data.get("year")
@@ -42,7 +42,7 @@ def generate_chart():
 
     if any(value is None for value in [year, month, day, hour, minute]):
         logger.error("Invalid request: Missing required fields")
-        return "Invalid request: Missing required fields", 400
+        return jsonify({"error": "Invalid request: Missing required fields"}), 400
 
     output_folder = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_folder, exist_ok=True)
@@ -55,17 +55,29 @@ def generate_chart():
         logger.info(f"Calculated positions: {positions}")
     except Exception as e:
         logger.error(f"Error calculating positions: {e}")
-        return "Error occurred during calculation.", 500
+        return jsonify({"error": "Error occurred during calculation."}), 500
 
-    output_path = os.path.join(output_folder, f"natal_chart_{uuid.uuid4().hex}.png")
+    output_filename = f"natal_chart_{uuid.uuid4().hex}.png"
+    output_path = os.path.join(output_folder, output_filename)
     try:
         plot_natal_chart(positions, output_path=output_path, show=False)
         logger.info(f"Chart saved successfully to: {output_path}")
     except Exception as e:
         logger.error(f"Error saving chart: {e}")
-        return "Error occurred while generating the chart.", 500
+        return jsonify({"error": "Error occurred while generating the chart."}), 500
 
-    return send_file(output_path, mimetype="image/png")
+    # 返回圖片 URL
+    chart_url = url_for('serve_output_file', filename=output_filename, _external=True)
+    return jsonify({"message": "Chart generated successfully", "chart_url": chart_url}), 200
+
+@app.route("/output/<filename>")
+def serve_output_file(filename):
+    output_folder = os.path.join(os.path.dirname(__file__), "output")
+    file_path = os.path.join(output_folder, filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, mimetype="image/png")
+    logger.error(f"File not found: {filename}")
+    return jsonify({"error": "File not found"}), 404
 
 @app.route("/ai-plugin.json")
 def serve_ai_plugin():
@@ -73,7 +85,7 @@ def serve_ai_plugin():
     if os.path.exists(plugin_path):
         return send_file(plugin_path, mimetype="application/json")
     logger.error("ai-plugin.json file not found")
-    return "ai-plugin.json file not found", 404
+    return jsonify({"error": "ai-plugin.json file not found"}), 404
 
 @app.route("/openapi.json")
 def serve_openapi():
@@ -81,7 +93,7 @@ def serve_openapi():
     if os.path.exists(openapi_path):
         return send_file(openapi_path, mimetype="application/json")
     logger.error("openapi.json file not found")
-    return "openapi.json file not found", 404
+    return jsonify({"error": "openapi.json file not found"}), 404
 
 def clean_output_folder(folder_path, max_age_seconds=3600):
     folder_path = os.path.abspath(folder_path)
