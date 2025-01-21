@@ -1,10 +1,10 @@
+import logging
 import os
 import time
 import uuid
-import logging
 
 import matplotlib
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for, send_file, safe_join
 
 matplotlib.use('Agg')  # 非交互式后端
 from calculator import calculate_planet_positions
@@ -73,11 +73,15 @@ def generate_chart():
 @app.route("/output/<filename>")
 def serve_output_file(filename):
     output_folder = os.path.join(os.path.dirname(__file__), "output")
-    file_path = os.path.join(output_folder, filename)
-    if os.path.exists(file_path):
+    try:
+        file_path = safe_join(output_folder, filename)
+        if not os.path.exists(file_path):
+            logger.error(f"File not found: {filename}")
+            return jsonify({"error": "File not found"}), 404
         return send_file(file_path, mimetype="image/png")
-    logger.error(f"File not found: {filename}")
-    return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        logger.error(f"Error serving file: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route("/ai-plugin.json")
 def serve_ai_plugin():
