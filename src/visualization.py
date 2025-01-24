@@ -13,6 +13,7 @@ try:
         from matplotlib import font_manager as fm
         prop = fm.FontProperties(fname=font_path)
         rcParams['font.family'] = prop.get_name()
+        print(f"Loaded font: {prop.get_name()}")
     else:
         print("Custom font not found, falling back to default.")
         rcParams['font.family'] = 'DejaVu Sans'  # 默认字体
@@ -34,16 +35,16 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
         ax.set_theta_zero_location('E')  # 将黄道的 0 度 (牡羊座) 设为东方
         ax.set_theta_direction(-1)       # 逆时针排列星座
 
-        # 黄道十二星座
+        # 黄道十二星座符号
         zodiac_signs = [
-            '牡羊座', '金牛座', '双子座', '巨蟹座', '狮子座', '处女座',
-            '天秤座', '天蝎座', '射手座', '摩羯座', '水瓶座', '双鱼座'
+            '\u2648', '\u2649', '\u264A', '\u264B', '\u264C', '\u264D',  # Aries 到 Virgo
+            '\u264E', '\u264F', '\u2650', '\u2651', '\u2652', '\u2653'   # Libra 到 Pisces
         ]
         zodiac_angles = np.linspace(0, 2 * np.pi, 13)[:-1]  # 每个星座的起始角度
 
         # 绘制星座分区
         for angle, sign in zip(zodiac_angles, zodiac_signs):
-            ax.text(angle, 1.1, sign, ha='center', va='center', fontsize=10, color='blue', fontproperties=prop)
+            ax.text(angle, 1.1, sign, ha='center', va='center', fontsize=12, color='blue')
             ax.plot([angle, angle], [0, 1], color='gray', linestyle='--', linewidth=0.5)
 
         # 绘制行星位置
@@ -53,8 +54,8 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
 
         # 图表设置
         ax.set_yticklabels([])
-        ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0), fontsize=8, prop=prop)
-        ax.set_title("命盘图", va='bottom', fontsize=16, pad=30, fontproperties=prop)
+        ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0), fontsize=8)
+        ax.set_title("命盘图", va='bottom', fontsize=16, pad=30)
         fig.subplots_adjust(top=0.85)
 
         # 保存或显示图表
