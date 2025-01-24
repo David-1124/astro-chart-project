@@ -114,3 +114,11 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     logger.info(f"Current working directory: {os.getcwd()}")
     app.run(host="0.0.0.0", port=port)
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    policy_path = os.path.join(os.path.dirname(__file__), "privacy-policy.html")
+    if os.path.exists(policy_path):
+        return send_file(policy_path, mimetype="text/html")
+    logger.error("Privacy policy file not found")
+    return jsonify({"error": "Privacy policy not found"}), 404
