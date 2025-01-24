@@ -14,7 +14,8 @@ try:
         prop = fm.FontProperties(fname=font_path)
         rcParams['font.family'] = prop.get_name()
     else:
-        raise FileNotFoundError("Custom font not found, falling back to default.")
+        print("Custom font not found, falling back to default.")
+        rcParams['font.family'] = 'DejaVu Sans'  # 默认字体
 except Exception as e:
     print(f"Error loading custom font: {e}. Using default font.")
     rcParams['font.family'] = 'DejaVu Sans'  # 默认字体
