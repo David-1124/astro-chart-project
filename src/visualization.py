@@ -23,10 +23,11 @@ except Exception as e:
 
 rcParams['axes.unicode_minus'] = False  # 确保负号正常显示
 
-def plot_natal_chart(planet_positions, output_path=None, show=True):
+def plot_natal_chart(planet_positions, aspect_lines=None, output_path=None, show=True):
     """
     绘制命盘图。
     :param planet_positions: 字典，行星名称和其黄道经度
+    :param aspect_lines: 列表，包含相位信息，如 [(行星1, 行星2, 相位颜色)]
     :param output_path: 保存图像的路径，默认为 None。如果提供路径，则保存图像到指定位置。
     :param show: 是否显示图表，默认为 True
     """
@@ -48,9 +49,17 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
             ax.plot([angle, angle], [0, 1], color='gray', linestyle='--', linewidth=0.5)
 
         # 绘制行星位置
+        planet_markers = {"☉": 'o', "☽": 's', "♂": '^', "♀": 'D', "☿": 'p', "♃": '*', "♄": 'H', "♅": 'd', "♆": 'v', "♇": 'h'}
         for planet, position in planet_positions.items():
             theta = np.deg2rad(position)
-            ax.plot(theta, 0.8, 'o', label=f"{planet} ({position:.2f}°)", markersize=8)
+            ax.plot(theta, 0.8, planet_markers.get(planet, 'o'), label=f"{planet} ({position:.2f}°)", markersize=8)
+
+        # 绘制相位线
+        if aspect_lines:
+            for planet1, planet2, color in aspect_lines:
+                pos1 = np.deg2rad(planet_positions.get(planet1, 0))
+                pos2 = np.deg2rad(planet_positions.get(planet2, 0))
+                ax.plot([pos1, pos2], [0.8, 0.8], color=color, linestyle='-', linewidth=1)
 
         # 图表设置
         ax.set_yticklabels([])
@@ -69,3 +78,25 @@ def plot_natal_chart(planet_positions, output_path=None, show=True):
             plt.close(fig)
     except Exception as e:
         print(f"An error occurred while plotting the natal chart: {e}")
+
+# 示例使用
+planet_positions = {
+    "☉": 10,
+    "☽": 120,
+    "♂": 180,
+    "♀": 240,
+    "☿": 300,
+    "♃": 45,
+    "♄": 135,
+    "♅": 225,
+    "♆": 315,
+    "♇": 90
+}
+
+aspect_lines = [
+    ("☉", "☽", "red"),
+    ("♂", "♀", "blue"),
+    ("☿", "♃", "green")
+]
+
+plot_natal_chart(planet_positions, aspect_lines, output_path="natal_chart.png", show=False)
