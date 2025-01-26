@@ -27,6 +27,28 @@ def favicon():
         return send_file(icon_path, mimetype="image/vnd.microsoft.icon")
     return '', 404
 
+# 相位线计算逻辑
+def calculate_aspects(positions):
+    """计算相位线"""
+    aspects = []
+    aspect_rules = {
+        "conjunction": 0,
+        "opposition": 180,
+        "trine": 120,
+        "square": 90
+    }
+    tolerance = 5  # 容差范围（度数）
+    for planet1, pos1 in positions.items():
+        for planet2, pos2 in positions.items():
+            if planet1 != planet2:
+                angle = abs(pos1 - pos2) % 360
+                for aspect, target_angle in aspect_rules.items():
+                    if abs(angle - target_angle) <= tolerance:
+                        color = {"conjunction": "red", "opposition": "blue",
+                                 "trine": "green", "square": "orange"}.get(aspect, "black")
+                        aspects.append((planet1, planet2, color))
+    return aspects
+
 @app.route("/generate-chart", methods=["POST"])
 def generate_chart():
     if not request.is_json:
@@ -53,14 +75,17 @@ def generate_chart():
     try:
         positions = calculate_planet_positions(year, month, day, hour, minute)
         logger.info(f"Calculated positions: {positions}")
+
+        # 计算相位线
+        aspect_lines = calculate_aspects(positions)
     except Exception as e:
-        logger.error(f"Error calculating positions: {e}")
+        logger.error(f"Error calculating positions or aspects: {e}")
         return jsonify({"error": "Error occurred during calculation."}), 500
 
     output_filename = f"natal_chart_{uuid.uuid4().hex}.png"
     output_path = os.path.join(output_folder, output_filename)
     try:
-        plot_natal_chart(positions, output_path=output_path, show=False)
+        plot_natal_chart(positions, aspect_lines=aspect_lines, output_path=output_path, show=False)
         logger.info(f"Chart saved successfully to: {output_path}")
     except Exception as e:
         logger.error(f"Error saving chart: {e}")
@@ -87,19 +112,23 @@ def serve_output_file(filename):
 
 @app.route("/ai-plugin.json")
 def serve_ai_plugin():
-    plugin_path = os.path.join(os.path.dirname(__file__), "ai-plugin.json")
-    if os.path.exists(plugin_path):
-        return send_file(plugin_path, mimetype="application/json")
-    logger.error("ai-plugin.json file not found")
-    return jsonify({"error": "ai-plugin.json file not found"}), 404
+    return serve_static_file("ai-plugin.json", "application/json")
 
 @app.route("/openapi.json")
 def serve_openapi():
-    openapi_path = os.path.join(os.path.dirname(__file__), "openapi.json")
-    if os.path.exists(openapi_path):
-        return send_file(openapi_path, mimetype="application/json")
-    logger.error("openapi.json file not found")
-    return jsonify({"error": "openapi.json file not found"}), 404
+    return serve_static_file("openapi.json", "application/json")
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    return serve_static_file("privacy-policy.html", "text/html")
+
+# 通用静态文件处理器
+def serve_static_file(filename, mimetype):
+    file_path = os.path.join(os.path.dirname(__file__), filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, mimetype=mimetype)
+    logger.error(f"{filename} file not found")
+    return jsonify({"error": f"{filename} not found"}), 404
 
 def clean_output_folder(folder_path, max_age_seconds=3600):
     folder_path = os.path.abspath(folder_path)
@@ -114,11 +143,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     logger.info(f"Current working directory: {os.getcwd()}")
     app.run(host="0.0.0.0", port=port)
-
-@app.route("/privacy-policy")
-def privacy_policy():
-    policy_path = os.path.join(os.path.dirname(__file__), "privacy-policy.html")
-    if os.path.exists(policy_path):
-        return send_file(policy_path, mimetype="text/html")
-    logger.error("Privacy policy file not found")
-    return jsonify({"error": "Privacy policy not found"}), 404
