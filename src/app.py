@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, url_for, send_file
 
 matplotlib.use('Agg')  # 非交互式后端
 from calculator import calculate_planet_positions
-from visualization import plot_natal_chart
+from visualization import plot_natal_chart, get_julian_day_with_time  # 新增导入 get_julian_day_with_time
 
 # 初始化日志
 logging.basicConfig(level=logging.INFO)
@@ -73,6 +73,7 @@ def generate_chart():
     clean_output_folder(output_folder, max_age_seconds=3600)
 
     try:
+        # 使用 calculator.py 中的 calculate_planet_positions 计算行星位置
         positions = calculate_planet_positions(year, month, day, hour, minute)
         logger.info(f"Calculated positions: {positions}")
 
@@ -82,10 +83,19 @@ def generate_chart():
         logger.error(f"Error calculating positions or aspects: {e}")
         return jsonify({"error": "Error occurred during calculation."}), 500
 
+    # 这里补充默认值：秒=0，时区=8（台北），以及默认经纬度
+    second = 0
+    timezone_offset = 8
+    latitude, longitude = 25.033, 121.565
+    # 利用 visualization.get_julian_day_with_time 计算 julian_day
+    julian_day = get_julian_day_with_time(year, month, day, hour, minute, second, timezone_offset)
+
     output_filename = f"natal_chart_{uuid.uuid4().hex}.png"
     output_path = os.path.join(output_folder, output_filename)
     try:
-        plot_natal_chart(positions, aspect_lines=aspect_lines, output_path=output_path, show=False)
+        # 修改调用：传入 positions, julian_day, latitude, longitude 以及 aspect_lines、output_path、show=False
+        plot_natal_chart(positions, julian_day, latitude, longitude,
+                         aspect_lines=aspect_lines, output_path=output_path, show=False)
         logger.info(f"Chart saved successfully to: {output_path}")
     except Exception as e:
         logger.error(f"Error saving chart: {e}")
