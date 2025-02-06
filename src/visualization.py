@@ -329,11 +329,11 @@ def plot_natal_chart(planet_positions, julian_day, latitude, longitude, aspect_l
 # 測試與執行主程式
 # -------------------------
 # 輸入客戶端的完整出生資料（例如：1958 年 1 月 6 日，當地時間 12:00:00，台北 UTC+8）
-birth_year = 1995
-birth_month = 11
-birth_day = 24
-birth_hour = 17
-birth_minute = 0
+birth_year = 1914
+birth_month = 3
+birth_day = 25
+birth_hour = 6
+birth_minute = 30
 birth_second = 0
 timezone_offset = 8  # 台北為 UTC+8
 
@@ -341,7 +341,7 @@ julian_day = get_julian_day_with_time(birth_year, birth_month, birth_day,
                                       birth_hour, birth_minute, birth_second,
                                       timezone_offset)
 
-latitude, longitude = 25.033, 121.565
+latitude, longitude = 39.9, 116.4
 
 planet_positions = get_planet_positions(julian_day)
 
