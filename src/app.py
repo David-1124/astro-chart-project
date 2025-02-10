@@ -28,17 +28,40 @@ def favicon():
         return send_file(icon_path, mimetype="image/vnd.microsoft.icon")
     return '', 404
 
+
 def calculate_aspects(planet_positions):
     """
-    根據行星間角度，自動判斷主要相位（合相、六分相、四分相、拱相、對分）
-    並傳回包含 (行星1, 行星2, color, diff) 的列表。
+    根据行星间角度，自动判断主要及辅助相位，并返回一个包含
+    (行星1, 行星2, 相位线颜色, 实际角度差, 标准相位角) 的列表。
+
+    新增相位包括：
+      - 半六分相：30° (容差 3°, 颜色 "magenta")
+      - 半方相：45° (容差 3°, 颜色 "cyan")
+      - 七分相：约51.43° (容差 3°, 颜色 "olive")
+      - 五分相：72° (容差 3°, 颜色 "teal")
+      - Sesquisquare：135° (容差 3°, 颜色 "pink")
+      - 双五分相：144° (容差 3°, 颜色 "brown")
+      - 欠刑相（Quincunx）：150° (容差 3°, 颜色 "gray")
+    同时保留原有的主要相位：
+      - 合相：0° (容差 8°, 颜色 "purple")
+      - 六分相：60° (容差 6°, 颜色 "green")
+      - 四分相：90° (容差 6°, 颜色 "blue")
+      - 拱相：120° (容差 6°, 颜色 "orange")
+      - 对分相：180° (容差 8°, 颜色 "red")
     """
     aspects_def = [
-        (0, 8, 'purple'),   # 合相 orb=8
-        (60, 6, 'green'),   # 六分相 orb=6
-        (90, 6, 'blue'),    # 四分相 orb=6
-        (120, 6, 'orange'), # 拱相 orb=6
-        (180, 8, 'red')     # 對分相 orb=8
+        (0, 8, 'purple'),  # 合相
+        (30, 3, 'magenta'),  # 半六分相
+        (45, 3, 'cyan'),  # 半方相
+        (51.43, 3, 'olive'),  # 七分相
+        (60, 6, 'green'),  # 六分相
+        (72, 3, 'teal'),  # 五分相
+        (90, 6, 'blue'),  # 四分相
+        (120, 6, 'orange'),  # 拱相
+        (135, 3, 'pink'),  # Sesquisquare (135°)
+        (144, 3, 'brown'),  # 双五分相
+        (150, 3, 'gray'),  # 欠刑相 / Quincunx
+        (180, 8, 'red')  # 对分相
     ]
     aspect_lines = []
     planets = list(planet_positions.keys())
@@ -46,15 +69,23 @@ def calculate_aspects(planet_positions):
         for j in range(i + 1, len(planets)):
             pos1 = planet_positions[planets[i]]['position']
             pos2 = planet_positions[planets[j]]['position']
+            # 计算两行星之间的角度差
             diff = abs(pos1 - pos2) % 360
             if diff > 180:
                 diff = 360 - diff
+            best = None
+            best_error = None
+            # 遍历所有相位规则，选择误差最小且在容差范围内的相位
             for aspect_angle, orb, color in aspects_def:
-                if abs(diff - aspect_angle) <= orb:
-                    aspect_lines.append((planets[i], planets[j], color, diff))
-                    break
+                error = abs(diff - aspect_angle)
+                if error <= orb:
+                    if best_error is None or error < best_error:
+                        best = (aspect_angle, color)
+                        best_error = error
+            if best is not None:
+                aspect_angle, color = best
+                aspect_lines.append((planets[i], planets[j], color, diff, aspect_angle))
     return aspect_lines
-
 
 @app.route("/generate-chart", methods=["POST"])
 def generate_chart():
