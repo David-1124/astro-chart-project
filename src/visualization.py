@@ -10,7 +10,7 @@ rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Segoe UI Symbol', 'Microsoft YaHei', 'DejaVu Sans', 'Microsoft JhengHei UI']
 rcParams['axes.unicode_minus'] = False
 
-# 依照 12 个星座的顺序（此处定义 0-30° 为 Capricorn，即摩羯座），
+# 依照 12 个星座的顺序（此处定义 0-30° 为 Aries，即白羊座），
 # 这里采用常见的黄道顺序：从 Aries 开始
 zodiac_signs = ['\u2648', '\u2649', '\u264A', '\u264B', '\u264C', '\u264D',
                 '\u264E', '\u264F', '\u2650', '\u2651', '\u2652', '\u2653']

@@ -8,10 +8,11 @@ from flask import Flask, request, jsonify, url_for, send_file
 
 matplotlib.use('Agg')  # 非交互式后端
 
-# 從 visualization 模組中匯入所需函式
-from visualization import plot_natal_chart, get_planet_positions, get_julian_day_with_time
+# 从 visualization 模块中导入所需函数
+from visualization import plot_natal_chart, get_planet_positions, get_julian_day_with_time, calculate_house_cusps, \
+    get_house, zodiac_signs, planet_symbols
 
-# 初始化日誌
+# 初始化日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,6 @@ def favicon():
         return send_file(icon_path, mimetype="image/vnd.microsoft.icon")
     return '', 404
 
-
 def calculate_aspects(planet_positions):
     """
     根据行星间角度，自动判断主要及辅助相位，并返回一个包含
@@ -41,7 +41,7 @@ def calculate_aspects(planet_positions):
       - 五分相：72° (容差 3°, 颜色 "teal")
       - Sesquisquare：135° (容差 3°, 颜色 "pink")
       - 双五分相：144° (容差 3°, 颜色 "brown")
-      - 欠刑相（Quincunx）：150° (容差 3°, 颜色 "gray")
+      - 欠刑相：150° (容差 3°, 颜色 "gray")
     同时保留原有的主要相位：
       - 合相：0° (容差 8°, 颜色 "purple")
       - 六分相：60° (容差 6°, 颜色 "green")
@@ -50,18 +50,18 @@ def calculate_aspects(planet_positions):
       - 对分相：180° (容差 8°, 颜色 "red")
     """
     aspects_def = [
-        (0, 8, 'purple'),  # 合相
-        (30, 3, 'magenta'),  # 半六分相
-        (45, 3, 'cyan'),  # 半方相
-        (51.43, 3, 'olive'),  # 七分相
-        (60, 6, 'green'),  # 六分相
-        (72, 3, 'teal'),  # 五分相
-        (90, 6, 'blue'),  # 四分相
-        (120, 6, 'orange'),  # 拱相
-        (135, 3, 'pink'),  # Sesquisquare (135°)
-        (144, 3, 'brown'),  # 双五分相
-        (150, 3, 'gray'),  # 欠刑相 / Quincunx
-        (180, 8, 'red')  # 对分相
+        (0, 8, 'purple'),
+        (30, 3, 'magenta'),
+        (45, 3, 'cyan'),
+        (51.43, 3, 'olive'),
+        (60, 6, 'green'),
+        (72, 3, 'teal'),
+        (90, 6, 'blue'),
+        (120, 6, 'orange'),
+        (135, 3, 'pink'),
+        (144, 3, 'brown'),
+        (150, 3, 'gray'),
+        (180, 8, 'red')
     ]
     aspect_lines = []
     planets = list(planet_positions.keys())
@@ -69,13 +69,11 @@ def calculate_aspects(planet_positions):
         for j in range(i + 1, len(planets)):
             pos1 = planet_positions[planets[i]]['position']
             pos2 = planet_positions[planets[j]]['position']
-            # 计算两行星之间的角度差
             diff = abs(pos1 - pos2) % 360
             if diff > 180:
                 diff = 360 - diff
             best = None
             best_error = None
-            # 遍历所有相位规则，选择误差最小且在容差范围内的相位
             for aspect_angle, orb, color in aspects_def:
                 error = abs(diff - aspect_angle)
                 if error <= orb:
@@ -89,7 +87,7 @@ def calculate_aspects(planet_positions):
 
 @app.route("/generate-chart", methods=["POST"])
 def generate_chart():
-    # 確保請求內容為 JSON 格式
+    # 确保请求内容为 JSON 格式
     if not request.is_json:
         logger.error("Invalid request: Expected JSON")
         return jsonify({"error": "Invalid request: Expected JSON"}), 400
@@ -103,43 +101,43 @@ def generate_chart():
     latitude = data.get("latitude")
     longitude = data.get("longitude")
 
-    # 檢查必要欄位是否皆有提供
+    # 检查必要字段是否均有提供
     if any(value is None for value in [year, month, day, hour, minute, latitude, longitude]):
         logger.error("Invalid request: Missing required fields")
         return jsonify({"error": "Invalid request: Missing required fields"}), 400
 
-    # 建立輸出資料夾，並產生唯一檔名
+    # 建立输出文件夹，并产生唯一文件名
     output_folder = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_folder, exist_ok=True)
     output_filename = f"natal_chart_{uuid.uuid4().hex}.png"
     output_path = os.path.join(output_folder, output_filename)
 
-    # 清理過期的舊檔案
+    # 清理过期的旧文件
     clean_output_folder(output_folder, max_age_seconds=3600)
 
     try:
-        # 設定預設秒數與時區（此處固定為 UTC+8）
+        # 设置默认秒数与时区（此处固定为 UTC+8）
         second = 0
         timezone_offset = 8
 
-        # 計算 Julian Day，使用客戶端輸入的出生年月日時分，以及從請求中取得的經緯度（在此僅用於 house 計算）
+        # 计算 Julian Day，使用客户端输入的出生年月时分以及经纬度（用于宫位计算）
         julian_day = get_julian_day_with_time(year, month, day, hour, minute, second, timezone_offset)
 
-        # 計算行星位置，結果格式為 { 'Sun': {'position': ..., 'retrograde': ..., 'speed': ...}, ... }
+        # 计算行星位置
         positions = get_planet_positions(julian_day)
         logger.info(f"Calculated positions: {positions}")
 
-        # 計算相位線
+        # 计算相位线
         aspect_lines = calculate_aspects(positions)
     except Exception as e:
         logger.error(f"Error calculating positions or aspects: {e}")
         return jsonify({"error": "Error occurred during calculation."}), 500
 
-    # 更新檔案名稱（以確保唯一性），並產生完整路徑
+    # 更新文件名以确保唯一性，并生成完整路径
     output_filename = f"natal_chart_{uuid.uuid4().hex}.png"
     output_path = os.path.join(output_folder, output_filename)
     try:
-        # 呼叫繪圖函式，傳入行星位置、julian_day 以及客戶端提供的經緯度
+        # 调用绘图函数，传入行星位置、julian_day 以及客户端提供的经纬度
         plot_natal_chart(positions, julian_day, latitude, longitude,
                          aspect_lines=aspect_lines, output_path=output_path, show=False)
         logger.info(f"Chart saved successfully to: {output_path}")
@@ -147,13 +145,33 @@ def generate_chart():
         logger.error(f"Error saving chart: {e}")
         return jsonify({"error": "Error occurred while generating the chart."}), 500
 
-    # 回傳圖片 URL 以及使用者輸入的經緯度資訊
+    # 构造一个包含行星符号、对应的星座度数和宫位的 JSON 数组
+    # 需要重新计算宫头，因为绘图函数内部可能没有返回该数据，我们在此重新计算
+    house_cusps = calculate_house_cusps(julian_day, latitude, longitude)
+    planetary_positions = []
+    for planet, data in positions.items():
+        pos = data['position']
+        retrograde = data['retrograde']
+        idx = int(pos // 30) % 12
+        degree_in_sign = pos % 30
+        # 构造星座及度数字符串，例如 "♑22.7°"
+        zodiac_value = f"{zodiac_signs[idx]}{degree_in_sign:.1f}°"
+        house_val = get_house(pos, house_cusps)
+        # 如果逆行，附加 " R"
+        planet_symbol = planet_symbols[planet] + (" R" if retrograde else "")
+        planetary_positions.append({
+            "planet": planet_symbol,
+            "zodiac": zodiac_value,
+            "house": house_val
+        })
+
     chart_url = url_for('serve_output_file', filename=output_filename, _external=True)
     return jsonify({
         "message": "Chart generated successfully",
         "chart_url": chart_url,
         "latitude": latitude,
-        "longitude": longitude
+        "longitude": longitude,
+        "planetary_positions": planetary_positions
     }), 200
 
 @app.route("/output/<filename>")
@@ -161,7 +179,7 @@ def serve_output_file(filename):
     output_folder = os.path.join(os.path.dirname(__file__), "output")
     file_path = os.path.abspath(os.path.join(output_folder, filename))
 
-    # 驗證路徑安全性
+    # 验证路径安全性
     if not file_path.startswith(os.path.abspath(output_folder)):
         logger.error(f"Attempted access to unsafe path: {file_path}")
         return jsonify({"error": "Access denied"}), 403
