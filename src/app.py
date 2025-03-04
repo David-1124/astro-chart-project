@@ -10,7 +10,7 @@ matplotlib.use('Agg')  # 非交互式后端
 
 # 从 visualization 模块中导入所需函数
 from visualization import plot_natal_chart, get_planet_positions, get_julian_day_with_time, calculate_house_cusps, \
-    get_house, zodiac_signs, planet_symbols
+    get_house, zodiac_signs, planet_symbols, zodiac_names
 
 # 初始化日志
 logging.basicConfig(level=logging.INFO)
@@ -85,6 +85,49 @@ def calculate_aspects(planet_positions):
                 aspect_lines.append((planets[i], planets[j], color, diff, aspect_angle))
     return aspect_lines
 
+# 在文件顶部增加辅助字典
+planet_names_en = {
+    "Sun": "Sun",
+    "Moon": "Moon",
+    "Mercury": "Mercury",
+    "Venus": "Venus",
+    "Mars": "Mars",
+    "Jupiter": "Jupiter",
+    "Saturn": "Saturn",
+    "Uranus": "Uranus",
+    "Neptune": "Neptune",
+    "Pluto": "Pluto"
+}
+
+planet_names_zh = {
+    "Sun": "太阳",
+    "Moon": "月亮",
+    "Mercury": "水星",
+    "Venus": "金星",
+    "Mars": "火星",
+    "Jupiter": "木星",
+    "Saturn": "土星",
+    "Uranus": "天王星",
+    "Neptune": "海王星",
+    "Pluto": "冥王星"
+}
+
+zodiac_names_zh = {
+    "Aries": "牡羊座",
+    "Taurus": "金牛座",
+    "Gemini": "双子座",
+    "Cancer": "巨蟹座",
+    "Leo": "狮子座",
+    "Virgo": "处女座",
+    "Libra": "天秤座",
+    "Scorpio": "天蝎座",
+    "Sagittarius": "射手座",
+    "Capricorn": "摩羯座",
+    "Aquarius": "水瓶座",
+    "Pisces": "双鱼座"
+}
+
+
 @app.route("/generate-chart", methods=["POST"])
 def generate_chart():
     # 确保请求内容为 JSON 格式
@@ -120,7 +163,7 @@ def generate_chart():
         second = 0
         timezone_offset = 8
 
-        # 计算 Julian Day，使用客户端输入的出生年月时分以及经纬度（用于宫位计算）
+        # 计算 Julian Day
         julian_day = get_julian_day_with_time(year, month, day, hour, minute, second, timezone_offset)
 
         # 计算行星位置
@@ -137,7 +180,6 @@ def generate_chart():
     output_filename = f"natal_chart_{uuid.uuid4().hex}.png"
     output_path = os.path.join(output_folder, output_filename)
     try:
-        # 调用绘图函数，传入行星位置、julian_day 以及客户端提供的经纬度
         plot_natal_chart(positions, julian_day, latitude, longitude,
                          aspect_lines=aspect_lines, output_path=output_path, show=False)
         logger.info(f"Chart saved successfully to: {output_path}")
@@ -145,8 +187,7 @@ def generate_chart():
         logger.error(f"Error saving chart: {e}")
         return jsonify({"error": "Error occurred while generating the chart."}), 500
 
-    # 构造一个包含行星符号、对应的星座度数和宫位的 JSON 数组
-    # 需要重新计算宫头，因为绘图函数内部可能没有返回该数据，我们在此重新计算
+    # 构造包含行星信息的 JSON 数组
     house_cusps = calculate_house_cusps(julian_day, latitude, longitude)
     planetary_positions = []
     for planet, data in positions.items():
@@ -154,14 +195,28 @@ def generate_chart():
         retrograde = data['retrograde']
         idx = int(pos // 30) % 12
         degree_in_sign = pos % 30
-        # 构造星座及度数字符串，例如 "♑22.7°"
         zodiac_value = f"{zodiac_signs[idx]}{degree_in_sign:.1f}°"
         house_val = get_house(pos, house_cusps)
-        # 如果逆行，附加 " R"
         planet_symbol = planet_symbols[planet] + (" R" if retrograde else "")
+
+        p_name_en = planet_names_en.get(planet, planet)
+        p_name_zh = planet_names_zh.get(planet, planet)
+
+        zodiac_en = zodiac_names[idx]
+        zodiac_zh = zodiac_names_zh.get(zodiac_en, zodiac_en)
+
         planetary_positions.append({
-            "planet": planet_symbol,
-            "zodiac": zodiac_value,
+            "planet": {
+                "symbol": planet_symbol,
+                "en": p_name_en,
+                "zh": p_name_zh
+            },
+            "zodiac": {
+                "symbol": zodiac_signs[idx],
+                "value": f"{degree_in_sign:.1f}°",
+                "en": zodiac_en,
+                "zh": zodiac_zh
+            },
             "house": house_val
         })
 
